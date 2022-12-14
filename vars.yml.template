@@ -1,0 +1,17 @@
+# Copy this file to vars.yml and then edit in your own values here
+
+# This is the name to use for the inventory app in Cloud Foundry. You might want to customize this
+# (eg "inventory-<yourname>") to avoid collisions with others are also working on
+# inventory in the same space.
+app_name: inventory
+
+# Number of application instances to run in cloud.gov
+instances: 1
+
+# Routes to assign to this application. This must be globally unique within cloud.gov.
+routes:
+  - route: inventory-foo-datagov.app.cloud.gov
+
+# Route for solr app
+# TODO remove this https://github.com/GSA/datagov-deploy/issues/2778
+solr_route: inventory-foo-solr.apps.internal

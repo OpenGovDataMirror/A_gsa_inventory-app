@@ -1,0 +1,75 @@
+version: '3'
+services:
+  ckan:
+    image: datagov/inventory-app:2.9
+    build: .
+    command: /app/start.sh
+    depends_on:
+      - datastore
+      - db
+      - solr
+      - redis
+      - localstack-container
+    ports:
+      - "5000:5000"
+    env_file: .env
+    environment:
+      CKAN_SITE_URL: http://localhost:5000
+    volumes:
+      - .:/app/
+      #- ./ckanext-datagov_inventory:/usr/lib/ckan/src/ckanext-datagov_inventory
+      - ./src:/srv/app/src_extensions
+      - ./temp:/temp
+
+  datastore:
+    image: postgres:9.6
+    environment:
+      POSTGRES_USER: datastore
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: datastore
+    volumes:
+      - ./datastore/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+
+  db:
+    image: datagov/catalog-db:inventory2_8
+    environment:
+      POSTGRES_USER: postgres
+      DB_CKAN_USER: ckan
+      DB_CKAN_PASSWORD: pass
+      DB_CKAN_DB: ckan
+
+  solr:
+    image: ghcr.io/gsa/catalog.data.gov.solr:8-stunnel-root
+    command: /app/solr/local_setup.sh
+    ports:
+      - "8983:8983"
+    deploy:
+      replicas: 1
+    volumes:
+      - solr_data:/var/solr
+      - .:/app
+
+  redis:
+    image: redis:alpine
+
+  localstack-container:
+    container_name: "localstack-container"
+    privileged: true
+    image: localstack/localstack:0.11.0
+    ports:
+      - "4572:4572"
+      - "8081:8081"
+    environment:
+      - SERVICES=s3
+      - DEBUG=1
+      - DATA_DIR=/tmp/localstack/data
+      - HOSTNAME=
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - DEFAULT_REGION=us-east-1
+      - START_WEB=1
+    volumes:
+      - "./tmp/localstack:/tmp/localstack"
+      - "./tmp/localstack/run/docker.sock:/var/run/docker.sock"
+volumes:
+  ckan:
+  solr_data:
